@@ -65,7 +65,16 @@
                             </thead>\
                             <tbody id=' + tableInfo['tableBodyId'] + '>\
                             </tbody>\
-                            </table> </div>'
+                            </table> \
+                         </div>\
+                         <style>\
+                            .table td, .table th {\
+                                font-size: 15px;\
+                            }\
+                            /table tr {\
+                                white-space: nowrap\
+                            }\
+                         </style>'
         console.log(htmlBody)
         $('#' + tableInfo['tableId']).html(htmlBody);
     }
