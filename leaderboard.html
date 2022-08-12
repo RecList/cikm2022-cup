@@ -8,6 +8,7 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"
             integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
     <!-- Favicon-->
+    <link href="https://cdn.datatables.net/1.10.20/css/dataTables.bootstrap4.min.css" rel="stylesheet">
     <link rel="icon" type="image/x-icon" href="assets/favicon.ico"/>
     <!-- Font Awesome icons (free version)-->
     <script src="https://use.fontawesome.com/releases/v6.1.0/js/all.js" crossorigin="anonymous"></script>
@@ -16,6 +17,10 @@
     <link href="https://fonts.googleapis.com/css?family=Roboto+Slab:400,100,300,700" rel="stylesheet" type="text/css"/>
     <!-- Core theme CSS (includes Bootstrap)-->
     <link href="css/styles.css" rel="stylesheet"/>
+    <script src="https://cdn.datatables.net/1.10.20/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.20/js/dataTables.bootstrap4.min.js"></script>
+
+
 </head>
 
 
@@ -45,48 +50,55 @@
     var url = new URL(window.location.href)
     var url_params = new URLSearchParams(url.search)
 
-
-
     function initLeaderboardTable(tableInfo) {
         var metrics = '';
         for (var i=0; i<tableInfo['metrics'].length; i++){
             metrics += '<th style="text-align:center">' + tableInfo['metric_to_title_mapping'][tableInfo['metrics'][i]] + '</th>'
         }
-        var htmlBody = ' <div class="table-responsive"> <table class="table table-striped">\
+        var htmlBody = ' <div class="table-responsive">\
+                            <table id="tableexample" class="table table-striped">\
                             <thead>\
                                 <th style="text-align:center">  # </th>\
                                 <th style="text-align:center"> Name </th>'
                                 + metrics +
-                                '<th style="text-align:center;white-space: nowrap">&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp Date &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</th>\
+                                '<th style="text-align:center;white-space: nowrap">&nbsp&nbsp&nbsp Date &nbsp&nbsp&nbsp</th>\
                             </thead>\
                             <tbody id=' + tableInfo['tableBodyId'] + '>\
                             </tbody>\
-                        </table> </div>'
+                            </table> </div>'
         console.log(htmlBody)
         $('#' + tableInfo['tableId']).html(htmlBody);
     }
 
 
     // function to build rows for the submissions in a given table body
-    function buildLeaderboardTable(data, targetTable, metrics) {
+    function buildLeaderboardTable(data, targetTable, metrics, t) {
         var htmlBody = '';
         var rows = data.data;
         for (var i = 0; i < rows.length; i++) {
-            // start row
-            htmlBody += '<tr>';
-            htmlBody += '<td style="text-align:center">' + rows[i]['#'] + '</td>';
-            htmlBody += '<td style="text-align:center">' + rows[i]['info']['nickname'] + '</td>';
+            metric_vals = []
             for (var j=0; j < metrics.length; j++){
-                htmlBody += '<td style="text-align:center">' + rows[i]['metrics'][metrics[j]] + '</td>';
+                metric_vals.push(rows[i]['metrics'][metrics[j]])
             }
-            htmlBody += '<td style="text-align:center">' + rows[i]['info']['submission_time'] + '</td>';
-            // end row
-            htmlBody += '</tr>';
+            let row_data = [rows[i]['#'], rows[i]['info']['nickname'], ...metric_vals, rows[i]['info']['submission_time']]
+            // console.log(row_data)
+            t.row.add(row_data).draw()
+            // OLD MANUAL WAY
+            // // start row
+            // htmlBody += '<tr>';
+            // htmlBody += '<td style="text-align:center">' + rows[i]['#'] + '</td>';
+            // htmlBody += '<td style="text-align:center">' + rows[i]['info']['nickname'] + '</td>';
+            // for (var j=0; j < metrics.length; j++){
+            //     htmlBody += '<td style="text-align:center">' + rows[i]['metrics'][metrics[j]] + '</td>';
+            // }
+            // htmlBody += '<td style="text-align:center">' + rows[i]['info']['submission_time'] + '</td>';
+            // // end row
+            // htmlBody += '</tr>';
         }
         // finally, fill the table
-        console.log(targetTable)
-        console.log(htmlBody)
-        $('#' + targetTable).html(htmlBody);
+        // console.log(targetTable)
+        // console.log(htmlBody)
+        // $('#' + targetTable).html(htmlBody);
     }
 
     function sign_up_success() {
@@ -110,18 +122,22 @@
         check_success(url_params)
         // generate tables
         TABLE_INFO.forEach(initLeaderboardTable)
+        // make into datatable obj
+        let TABLE = $('#tableexample').DataTable();
         // put info into tables
+
         TABLE_INFO.forEach(tableInfo =>
             $.get(ENDPOINT_URL, {limit: 10, task: tableInfo['task']})
                 // when done
                 .done(function (data) {
                     console.log("Data Loaded: " + JSON.stringify(data));
-                    buildLeaderboardTable(data, tableInfo['tableBodyId'], tableInfo['metrics']);
+                    buildLeaderboardTable(data, tableInfo['tableBodyId'], tableInfo['metrics'], TABLE);
                 }) // when something happens
                 .fail(function (data) {
                     alert("ERROR WHEN CALLING THE LEADERBOARD ENDPOINT");
                 })
         );
+
     });
 
     // captcha
@@ -270,6 +286,9 @@
 
 <!-- Bootstrap core JS-->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+
+
 <!-- Core theme JS-->
 <script src="js/scripts.js"></script>
 <!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *-->
