@@ -20,25 +20,44 @@
 
 
 <script>
-    var ENDPOINT_URL = 'https://usb3d4wvp3.execute-api.us-west-2.amazonaws.com/dev/leaderboard';
+    var ENDPOINT_URL = 'https://usb3d4wvp3.execute-api.us-west-2.amazonaws.com/dev/leaderboard_v2';
     var TABLE_INFO = [{
         'task': 'evalRS',
         'tableBodyId': 'evalRSTableBody',
         'tableId': 'evalRSTable',
-        'metric_name': 'Score'
+        'metrics': [
+            "score", "hit_rate", "mrr", "mred_country", "mred_user_activity", "mred_track_popularity",
+            "mred_artist_popularity", "mred_gender", "being_less_wrong", "latent_diversity"
+        ],
+        'metric_to_title_mapping':{
+            "score":"Score",
+            "hit_rate": "Hit Rate",
+            "mrr": "MRR",
+            "mred_country": "Country (MRED)",
+            "mred_track_popularity": "Track Pop. (MRED)",
+            "mred_artist_popularity": "Artist Pop. (MRED)",
+            "mred_user_activity": "User Act. (MRED)",
+            "mred_gender": "Gender (MRED)",
+            "being_less_wrong": "Being Less Wrong",
+            "latent_diversity": "Latent Diversity"
+        }
     }]
-    // {'task':'rec_next', 'tableBodyId':'recNextTableBody','tableId':'recNextTable', 'metric_name':'MRR'},
-    // {'task':'cart', 'tableBodyId':'cartTableBody', 'tableId':'cartTable', 'metric_name':'Weighted F1'}  ]
     var url = new URL(window.location.href)
     var url_params = new URLSearchParams(url.search)
 
+
+
     function initLeaderboardTable(tableInfo) {
+        var metrics = '';
+        for (var i=0; i<tableInfo['metrics'].length; i++){
+            metrics += '<th style="text-align:center">' + tableInfo['metric_to_title_mapping'][tableInfo['metrics'][i]] + '</th>'
+        }
         var htmlBody = ' <div class="table-responsive"> <table class="table table-striped">\
                             <thead>\
-                                <th>  Position </th>\
-                                <th> Nickname </th>\
-                                <th> Score (' + tableInfo['metric_name'] + ') </th>\
-                                <th> Timestamp </th>\
+                                <th style="text-align:center">  # </th>\
+                                <th style="text-align:center"> Name </th>'
+                                + metrics +
+                                '<th style="text-align:center;white-space: nowrap">&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp Date &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</th>\
                             </thead>\
                             <tbody id=' + tableInfo['tableBodyId'] + '>\
                             </tbody>\
@@ -49,20 +68,24 @@
 
 
     // function to build rows for the submissions in a given table body
-    function buildLeaderboardTable(data, targetTable) {
+    function buildLeaderboardTable(data, targetTable, metrics) {
         var htmlBody = '';
         var rows = data.data;
         for (var i = 0; i < rows.length; i++) {
             // start row
             htmlBody += '<tr>';
-            htmlBody += '<td>' + rows[i]['#'] + '</td>';
-            htmlBody += '<td>' + rows[i]['info']['nickname'] + '</td>';
-            htmlBody += '<td>' + rows[i]['score'] + '</td>';
-            htmlBody += '<td>' + rows[i]['info']['submission_time'] + '</td>';
+            htmlBody += '<td style="text-align:center">' + rows[i]['#'] + '</td>';
+            htmlBody += '<td style="text-align:center">' + rows[i]['info']['nickname'] + '</td>';
+            for (var j=0; j < metrics.length; j++){
+                htmlBody += '<td style="text-align:center">' + rows[i]['metrics'][metrics[j]] + '</td>';
+            }
+            htmlBody += '<td style="text-align:center">' + rows[i]['info']['submission_time'] + '</td>';
             // end row
             htmlBody += '</tr>';
         }
         // finally, fill the table
+        console.log(targetTable)
+        console.log(htmlBody)
         $('#' + targetTable).html(htmlBody);
     }
 
@@ -93,7 +116,7 @@
                 // when done
                 .done(function (data) {
                     console.log("Data Loaded: " + JSON.stringify(data));
-                    buildLeaderboardTable(data, tableInfo['tableBodyId']);
+                    buildLeaderboardTable(data, tableInfo['tableBodyId'], tableInfo['metrics']);
                 }) // when something happens
                 .fail(function (data) {
                     alert("ERROR WHEN CALLING THE LEADERBOARD ENDPOINT");
