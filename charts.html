@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CIKM Data Challenge Leaderboard</title>
+    <link rel="stylesheet" href="style.css">
+
+    <!--Load the AJAX API-->
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"
+            integrity="sha512-ElRFoEQdI5Ht6kZvyzXhYG9NqjtkmlkfYk0wr6wHxU9JEHakS7UJZNeml5ALk+8IKlU6jDgMabC3vkumRokgJA=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"
+            integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <!-- Favicon-->
+    <link href="https://cdn.datatables.net/1.10.20/css/dataTables.bootstrap4.min.css" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico"/>
+    <!-- Font Awesome icons (free version)-->
+    <script src="https://use.fontawesome.com/releases/v6.1.0/js/all.js" crossorigin="anonymous"></script>
+    <!-- Google fonts-->
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700" rel="stylesheet" type="text/css"/>
+    <link href="https://fonts.googleapis.com/css?family=Roboto+Slab:400,100,300,700" rel="stylesheet" type="text/css"/>
+    <!-- Core theme CSS (includes Bootstrap)-->
+    <link href="css/styles.css" rel="stylesheet"/>
+    <script src="https://cdn.datatables.net/1.10.20/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.20/js/dataTables.bootstrap4.min.js"></script>
+
+    <script>
+        var ENDPOINT_URL = 'https://usb3d4wvp3.execute-api.us-west-2.amazonaws.com/dev/leaderboard_v2';
+        var TABLE_INFO = [{
+            'task': 'evalRS',
+            'tableBodyId': 'evalRSTableBody',
+            'tableId': 'evalRSTable',
+            'metrics': [
+                "score", "hit_rate", "mrr", "mred_country", "mred_user_activity", "mred_track_popularity",
+                "mred_artist_popularity", "mred_gender", "being_less_wrong", "latent_diversity"
+            ],
+            'metric_to_title_mapping': {
+                "score": "Score",
+                "hit_rate": "Hit Rate",
+                "mrr": "MRR",
+                "mred_country": "Country (MRED)",
+                "mred_track_popularity": "Track Pop. (MRED)",
+                "mred_artist_popularity": "Artist Pop. (MRED)",
+                "mred_user_activity": "User Act. (MRED)",
+                "mred_gender": "Gender (MRED)",
+                "being_less_wrong": "Being Less Wrong",
+                "latent_diversity": "Latent Diversity"
+            }
+        }]
+        var url = new URL(window.location.href)
+        var url_params = new URLSearchParams(url.search)
+
+        function initLeaderboardTable(tableInfo) {
+            var metrics = '';
+            for (var i = 0; i < tableInfo['metrics'].length; i++) {
+                metrics += '<th style="text-align:center">' + tableInfo['metric_to_title_mapping'][tableInfo['metrics'][i]] + '</th>'
+            }
+            var htmlBody = ' <div class="table-responsive">\
+                            <table id="tableexample" class="table table-striped">\
+                            <thead>\
+                                <th style="text-align:center">  # </th>\
+                                <th style="text-align:center"> Name </th>'
+                + metrics +
+                '<th style="text-align:center;white-space: nowrap">&nbsp&nbsp&nbsp Date &nbsp&nbsp&nbsp</th>\
+            </thead>\
+            <tbody id=' + tableInfo['tableBodyId'] + '>\
+                            </tbody>\
+                            </table> </div>'
+            console.log(htmlBody)
+            $('#' + tableInfo['tableId']).html(htmlBody);
+        }
+
+
+        // function to build rows for the submissions in a given table body
+        function buildLeaderboardTable(data, targetTable, metrics, t) {
+            var htmlBody = '';
+            var rows = data.data;
+            for (var i = 0; i < rows.length; i++) {
+                metric_vals = []
+                for (var j = 0; j < metrics.length; j++) {
+                    metric_vals.push(rows[i]['metrics'][metrics[j]])
+                }
+                let row_data = [rows[i]['#'], rows[i]['info']['nickname'], ...metric_vals, rows[i]['info']['submission_time']]
+                // console.log(row_data)
+                t.row.add(row_data).draw()
+
+            }
+
+        }
+
+
+        // on page load, call the endpoint
+        $(document).ready(function () {
+            // generate tables
+            TABLE_INFO.forEach(initLeaderboardTable)
+            // make into datatable obj
+            let TABLE = $('#tableexample').DataTable();
+            // put info into tables
+
+            TABLE_INFO.forEach(tableInfo =>
+                $.get(ENDPOINT_URL, {limit: 10, task: tableInfo['task']})
+                    // when done
+                    .done(function (data) {
+                        console.log("Data Loaded: " + JSON.stringify(data));
+                        buildLeaderboardTable(data, tableInfo['tableBodyId'], tableInfo['metrics'], TABLE);
+                    }) // when something happens
+                    .fail(function (data) {
+                        alert("ERROR WHEN CALLING THE LEADERBOARD ENDPOINT");
+                    })
+            );
+
+
+        });
+
+        $(document).ready(function () {
+            $("#buildChart").click(function () {
+                var dataArray = [];
+                dataArray.push(['Val1', 'Val2']);
+                $('#tableexample').DataTable().rows().data().each(function (value, index) {
+                    dataArray.push([-1 * parseFloat(value[5]), parseFloat(value[3])]);
+                });
+
+                drawChart(dataArray);
+            });
+        });
+
+        function drawChart(dataArray) {
+            // do something
+            console.log(dataArray)
+        }
+
+
+    </script>
+
+</head>
+<body>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+        <div id="leaderboardContainer">
+            <div class="taskContainer">
+                <h2>EvalRS Leaderboard</h2>
+                <div class="boardContainer" id="evalRSTable"></div>
+                <!--                <h2>Subsequent Items Prediction Leaderboard</h2>-->
+                <!--                <div class="boardContainer" id="recAllTable"></div>-->
+                <!--                <h2>Purchase Intent Prediction Leaderboard</h2>-->
+                <!--                <div class="boardContainer" id="cartTable"></div>-->
+            </div> <!-- end of container with NEP task -->
+        </div> <!-- end of leaderboards -->
+    </div>
+        </div>
+    <div class="row">
+        <div class="col-md-12">
+            <button class="btn btn-secondary" id="buildChart">create chart</button>
+        </div>
+    </div>
+    <div class="row">
+        <canvas id="chart2"></canvas>
+    </div>
+</div>
+</body>
+
+<!-- Bootstrap core JS-->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+
+<!-- Core theme JS-->
+<script src="js/scripts.js"></script>
+<!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *-->
+<!-- * *                               SB Forms JS                               * *-->
+<!-- * * Activate your form at https://startbootstrap.com/solution/contact-forms * *-->
+<!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *-->
+<script src="https://cdn.startbootstrap.com/sb-forms-latest.js"></script>
+
+</html>
