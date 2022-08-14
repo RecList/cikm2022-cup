@@ -25,6 +25,7 @@
     <link href="css/styles.css" rel="stylesheet"/>
     <script src="https://cdn.datatables.net/1.10.20/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.10.20/js/dataTables.bootstrap4.min.js"></script>
+    <script src="js/evalrs.js"></script>
     <script>
         var ENDPOINT_URL = 'https://usb3d4wvp3.execute-api.us-west-2.amazonaws.com/dev/leaderboard_v2';
         var TABLE_INFO = [{
@@ -107,6 +108,7 @@
                         var mrr_latent_diversity = [];
                         var mrr_being_less_wrong = [];
                         var colors = []
+
                         $('#tableexample').DataTable().rows().data().each(function (value, index) {
                             // the third dimension is constant but we can use it if we like for
                             // one more stuff
@@ -147,10 +149,10 @@
                                 r: 12,
                             });
                         });
-                        drawChart('Country MRED', 'MRR', 'Something else', mrr_country_mred, "chart1", colors);
-                        drawChart('Gender MRED', 'MRR', 'Something else', mrr_gender_mred, "chart2", colors);
-                        drawChart('Latent Diversity', 'MRR', 'Something else', mrr_latent_diversity, "chart3", colors);
-                        drawChart('Being Less Wrong', 'MRR', 'Something else', mrr_being_less_wrong, "chart4", colors);
+                        drawScatterChart('Country MRED', 'MRR', 'Something else', mrr_country_mred, "chart1", colors);
+                        drawScatterChart('Gender MRED', 'MRR', 'Something else', mrr_gender_mred, "chart2", colors);
+                        drawScatterChart('Latent Diversity', 'MRR', 'Something else', mrr_latent_diversity, "chart3", colors);
+                        drawScatterChart('Being Less Wrong', 'MRR', 'Something else', mrr_being_less_wrong, "chart4", colors);
 
                     }) // when something happens
                     .fail(function (data) {
@@ -159,42 +161,7 @@
             );
         });
 
-        function drawChart(x_axis_label, y_axis_label, z_axis_label, dataArray, chart_location, colors) {
-            // console.log("Displaying cool chart!");
 
-            const data = {
-                datasets: [{
-                    label: 'X (' + x_axis_label + ') vs Y (' + y_axis_label + ')',
-                    data: dataArray,
-                    backgroundColor: colors
-                }]
-            };
-            const ctx = document.getElementById(chart_location);
-            const myChart = new Chart(ctx, {
-                type: 'bubble',
-                data: data,
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    plugins: {
-                        tooltip: {
-                            callbacks: {
-                                label: function (context) {
-                                    let label = context.dataset;
-                                    return context.raw.team;
-                                }
-                            }
-                        }
-                    },
-                        scales: {
-                        y: {
-                            beginAtZero: true
-                        },
-
-                    }
-                }
-            });
-        }
     </script>
 </head>
 <body id="page-top">
@@ -222,7 +189,7 @@
         </div>
     </div>
 </nav>
-<section class="page-section" id="instructions">
+<section class="page-section">
 <div class="container">
 
     <div class="row">

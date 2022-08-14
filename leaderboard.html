@@ -19,8 +19,10 @@
     <link href="css/styles.css" rel="stylesheet"/>
     <script src="https://cdn.datatables.net/1.10.20/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.10.20/js/dataTables.bootstrap4.min.js"></script>
-
-
+    <script src="js/evalrs.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"
+            integrity="sha512-ElRFoEQdI5Ht6kZvyzXhYG9NqjtkmlkfYk0wr6wHxU9JEHakS7UJZNeml5ALk+8IKlU6jDgMabC3vkumRokgJA=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </head>
 
 
@@ -34,8 +36,8 @@
             "score", "hit_rate", "mrr", "mred_country", "mred_user_activity", "mred_track_popularity",
             "mred_artist_popularity", "mred_gender", "being_less_wrong", "latent_diversity"
         ],
-        'metric_to_title_mapping':{
-            "score":"Score",
+        'metric_to_title_mapping': {
+            "score": "Score",
             "hit_rate": "Hit Rate",
             "mrr": "MRR",
             "mred_country": "Country (MRED)",
@@ -52,7 +54,7 @@
 
     function initLeaderboardTable(tableInfo) {
         var metrics = '';
-        for (var i=0; i<tableInfo['metrics'].length; i++){
+        for (var i = 0; i < tableInfo['metrics'].length; i++) {
             metrics += '<th style="text-align:center">' + tableInfo['metric_to_title_mapping'][tableInfo['metrics'][i]] + '</th>'
         }
         var htmlBody = ' <div class="table-responsive">\
@@ -60,10 +62,10 @@
                             <thead>\
                                 <th style="text-align:center">  # </th>\
                                 <th style="text-align:center"> Name </th>'
-                                + metrics +
-                                '<th style="text-align:center;white-space: nowrap">&nbsp&nbsp&nbsp Date &nbsp&nbsp&nbsp</th>\
-                            </thead>\
-                            <tbody id=' + tableInfo['tableBodyId'] + '>\
+            + metrics +
+            '<th style="text-align:center;white-space: nowrap">&nbsp&nbsp&nbsp Date &nbsp&nbsp&nbsp</th>\
+        </thead>\
+        <tbody id=' + tableInfo['tableBodyId'] + '>\
                             </tbody>\
                             </table> </div>'
         console.log(htmlBody)
@@ -77,28 +79,16 @@
         var rows = data.data;
         for (var i = 0; i < rows.length; i++) {
             metric_vals = []
-            for (var j=0; j < metrics.length; j++){
+            for (var j = 0; j < metrics.length; j++) {
                 metric_vals.push(rows[i]['metrics'][metrics[j]])
             }
             let row_data = [rows[i]['#'], rows[i]['info']['nickname'], ...metric_vals, rows[i]['info']['submission_time']]
             // console.log(row_data)
             t.row.add(row_data).draw()
-            // OLD MANUAL WAY
-            // // start row
-            // htmlBody += '<tr>';
-            // htmlBody += '<td style="text-align:center">' + rows[i]['#'] + '</td>';
-            // htmlBody += '<td style="text-align:center">' + rows[i]['info']['nickname'] + '</td>';
-            // for (var j=0; j < metrics.length; j++){
-            //     htmlBody += '<td style="text-align:center">' + rows[i]['metrics'][metrics[j]] + '</td>';
-            // }
-            // htmlBody += '<td style="text-align:center">' + rows[i]['info']['submission_time'] + '</td>';
-            // // end row
-            // htmlBody += '</tr>';
+
         }
-        // finally, fill the table
-        // console.log(targetTable)
-        // console.log(htmlBody)
-        // $('#' + targetTable).html(htmlBody);
+
+
     }
 
     function sign_up_success() {
@@ -132,6 +122,57 @@
                 .done(function (data) {
                     console.log("Data Loaded: " + JSON.stringify(data));
                     buildLeaderboardTable(data, tableInfo['tableBodyId'], tableInfo['metrics'], TABLE);
+
+
+                    var mrr_country_mred = [];
+                    var mrr_gender_mred = [];
+                    var mrr_latent_diversity = [];
+                    var mrr_being_less_wrong = [];
+                    var colors = []
+
+                    $('#tableexample').DataTable().rows().data().each(function (value, index) {
+                        // the third dimension is constant but we can use it if we like for
+                        // one more stuff
+                        if (value[1].includes("Baseline")) {
+                            var color = 'rgb(1, 99, 132)'
+                        } else {
+                            var color = 'rgb(255, 99, 132)'
+                        }
+
+                        colors.push(color)
+
+                        mrr_country_mred.push({
+                            team: value[1],
+                            x: -1 * parseFloat(value[5]),
+                            y: parseFloat(value[4]),
+                            r: 12,
+                        });
+
+                        mrr_gender_mred.push({
+                            team: value[1],
+                            x: -1 * parseFloat(value[9]),
+                            y: parseFloat(value[4]),
+                            r: 12,
+                        });
+
+                        mrr_latent_diversity.push({
+                            team: value[1],
+                            x: -1 * parseFloat(value[11]),
+                            y: parseFloat(value[4]),
+                            r: 12,
+                        });
+
+                        mrr_being_less_wrong.push({
+                            team: value[1],
+                            x: parseFloat(value[10]),
+                            y: parseFloat(value[4]),
+                            r: 12,
+                        });
+                    });
+                    drawScatterChart('Country MRED', 'MRR', 'Something else', mrr_country_mred, "chart1", colors);
+                    drawScatterChart('Gender MRED', 'MRR', 'Something else', mrr_gender_mred, "chart2", colors);
+
+
                 }) // when something happens
                 .fail(function (data) {
                     alert("ERROR WHEN CALLING THE LEADERBOARD ENDPOINT");
@@ -174,10 +215,13 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarResponsive">
             <ul class="navbar-nav text-uppercase ms-auto py-4 py-lg-0">
-                <li class="nav-item"><a class="nav-link" href="https://reclist.io/cikm2022-cup#services">Challenge</a></li>
+                <li class="nav-item"><a class="nav-link" href="https://reclist.io/cikm2022-cup#services">Challenge</a>
+                </li>
                 <li class="nav-item"><a class="nav-link" href="https://reclist.io/cikm2022-cup#prize">Prize</a></li>
-                <li class="nav-item"><a class="nav-link" href="https://reclist.io/cikm2022-cup#dates">Important Dates</a></li>
-                <li class="nav-item"><a class="nav-link" href="https://reclist.io/cikm2022-cup#organizers">Organizers</a></li>
+                <li class="nav-item"><a class="nav-link" href="https://reclist.io/cikm2022-cup#dates">Important
+                    Dates</a></li>
+                <li class="nav-item"><a class="nav-link"
+                                        href="https://reclist.io/cikm2022-cup#organizers">Organizers</a></li>
             </ul>
         </div>
     </div>
@@ -207,81 +251,113 @@
 
     </div>
     <div class="container">
-    <div class="row">
-        <div id="signupContainer">
-            <h2>Sign-up</h2>
-            <p>
-                To sign up for the challenge, you should fill the form below with your official e-mail, your
-                organization
-                (university or company), first and last name of the team lead and a nickname for the leaderboard.
-                You will receive a confirmation e-mail from the system including your user id and AWS write-only
-                credentials
-                to upload your json files to the challenge bucket - please use the information responsibly. After
-                submitting the form, you will be sent back to this page: please <b>wait some minutes and re-check your
-                e-mail,
-                <em>including your spam folder</em></b> before re-submitting. We suggest adding
-                <em>evalrs2022@gmail.com</em>
-                to your list of trusted senders.
-            </p>
-            <p>
-                This web-app is hosted on a devoted AWS account and all data will be destroyed at the end of the Data
-                Challenge:
-                if you want to use the same serverless back-end to run a lightweight leaderboard website, please get in
-                touch.
-            </p>
-            <p>
-                For the submission format and the general rules of the contest,
-                please consult the relevant section in the
-                <a target="_blank" href="https://github.com/RecList/evalRS-CIKM-2022">README</a>
-            </p>
-            <div align="center">
-                <form action="https://usb3d4wvp3.execute-api.us-west-2.amazonaws.com/dev/signup" method="POST"
-                      onsubmit="return submitUserForm();">
-                    <table>
-                        <tr>
-                            <td align="right"><label for="fname">First Name</label></td>
-                            <td align="left"><input type="text" id="fname" name="fname" placeholder="Tony" required></td>
-                        </tr>
-                        <tr>
-                            <td align="right"><label for="lname">Last Name</label></td>
-                            <td align="left"><input type="text" id="lname" name="lname" placeholder="Stark" required></td>
-                        </tr>
-                        <tr>
-                            <td align="right"><label for="nickname">Nickname</label></td>
-                            <td align="left"><input type="text" id="nickname" name="nickname" placeholder="Ironman" required>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td align="right"><label for="email">E-mail</label></td>
-                            <td align="left"><input type="text" id="email" name="email"
-                                                    placeholder="tony@starkindustries.com" required></td>
-                        </tr>
-                        <tr>
-                            <td align="right"><label for="organization">Organization</label></td>
-                            <td align="left"><input type="text" id="organization" name="organization"
-                                                    placeholder="Stark Industries" required></td>
-                        </tr>
-                    </table>
-                    <div class="g-recaptcha" data-sitekey="6LfKDhIhAAAAANZmfgQ9JIkcTPnn71DyleqTLLxD"
-                         data-callback="enableBtn"></div>
-                    <br/>
-                    <input type="submit" value="Submit" id="signBtn" disabled="disabled" class="submitBtn">
-                </form>
-            </div>
-        </div> <!-- end of sign up -->
-        <div id="leaderboardContainer">
-            <div class="taskContainer">
-                <h2>EvalRS Leaderboard</h2>
-                <div class="boardContainer" id="evalRSTable"></div>
-                <!--                <h2>Subsequent Items Prediction Leaderboard</h2>-->
-                <!--                <div class="boardContainer" id="recAllTable"></div>-->
-                <!--                <h2>Purchase Intent Prediction Leaderboard</h2>-->
-                <!--                <div class="boardContainer" id="cartTable"></div>-->
-            </div> <!-- end of container with NEP task -->
-        </div> <!-- end of leaderboards -->
-    </div> <!-- end of all page container -->
+        <div class="row">
+            <div id="signupContainer">
+                <h2>Sign-up</h2>
+                <p>
+                    To sign up for the challenge, you should fill the form below with your official e-mail, your
+                    organization
+                    (university or company), first and last name of the team lead and a nickname for the leaderboard.
+                    You will receive a confirmation e-mail from the system including your user id and AWS write-only
+                    credentials
+                    to upload your json files to the challenge bucket - please use the information responsibly. After
+                    submitting the form, you will be sent back to this page: please <b>wait some minutes and re-check
+                    your
+                    e-mail,
+                    <em>including your spam folder</em></b> before re-submitting. We suggest adding
+                    <em>evalrs2022@gmail.com</em>
+                    to your list of trusted senders.
+                </p>
+                <p>
+                    This web-app is hosted on a devoted AWS account and all data will be destroyed at the end of the
+                    Data
+                    Challenge:
+                    if you want to use the same serverless back-end to run a lightweight leaderboard website, please get
+                    in
+                    touch.
+                </p>
+                <p>
+                    For the submission format and the general rules of the contest,
+                    please consult the relevant section in the
+                    <a target="_blank" href="https://github.com/RecList/evalRS-CIKM-2022">README</a>
+                </p>
+                <div align="center">
+                    <form action="https://usb3d4wvp3.execute-api.us-west-2.amazonaws.com/dev/signup" method="POST"
+                          onsubmit="return submitUserForm();">
+                        <table>
+                            <tr>
+                                <td align="right"><label for="fname">First Name</label></td>
+                                <td align="left"><input type="text" id="fname" name="fname" placeholder="Tony" required>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td align="right"><label for="lname">Last Name</label></td>
+                                <td align="left"><input type="text" id="lname" name="lname" placeholder="Stark"
+                                                        required></td>
+                            </tr>
+                            <tr>
+                                <td align="right"><label for="nickname">Nickname</label></td>
+                                <td align="left"><input type="text" id="nickname" name="nickname" placeholder="Ironman"
+                                                        required>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td align="right"><label for="email">E-mail</label></td>
+                                <td align="left"><input type="text" id="email" name="email"
+                                                        placeholder="tony@starkindustries.com" required></td>
+                            </tr>
+                            <tr>
+                                <td align="right"><label for="organization">Organization</label></td>
+                                <td align="left"><input type="text" id="organization" name="organization"
+                                                        placeholder="Stark Industries" required></td>
+                            </tr>
+                        </table>
+                        <div class="g-recaptcha" data-sitekey="6LfKDhIhAAAAANZmfgQ9JIkcTPnn71DyleqTLLxD"
+                             data-callback="enableBtn"></div>
+                        <br/>
+                        <input type="submit" value="Submit" id="signBtn" disabled="disabled" class="submitBtn">
+                    </form>
+                </div>
+            </div> <!-- end of sign up -->
+            <div id="leaderboardContainer">
+                <div class="taskContainer">
+                    <h2>EvalRS Leaderboard</h2>
+                    <div class="boardContainer" id="evalRSTable"></div>
+                    <!--                <h2>Subsequent Items Prediction Leaderboard</h2>-->
+                    <!--                <div class="boardContainer" id="recAllTable"></div>-->
+                    <!--                <h2>Purchase Intent Prediction Leaderboard</h2>-->
+                    <!--                <div class="boardContainer" id="cartTable"></div>-->
+                </div> <!-- end of container with NEP task -->
+            </div> <!-- end of leaderboards -->
+        </div> <!-- end of all page container -->
     </div>
 </section>
+
+<section class="page-section">
+    <div class="container">
+
+        <div class="row">
+            <h2 class="section-heading"> Some charts to better understand how models perform </h2>
+            <p>We are plotting MRR with other metrics, to see the impact of the "main" metric onto the others. </p>
+            <p>More charts available on the charts page!</p>
+            <a class="btn btn-success" target="_blank" href="charts.html">Go to Charts Page</a>
+        </div>
+        <div class="row" style="margin-top:100px;">
+            <div class="col-md-6">
+                <h3>MRR and Country MRED</h3>
+
+                <canvas id="chart1" width="600" height="600"></canvas>
+            </div>
+            <div class="col-md-6">
+                <h3>MRR and Gender MRED</h3>
+
+                <canvas id="chart2" width="600" height="600"></canvas>
+            </div>
+        </div>
+
+    </div>
+</section>
+
 </body>
 
 <!-- Bootstrap core JS-->
@@ -289,11 +365,15 @@
 
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-GKC969S05Z"></script>
 <script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
+    window.dataLayer = window.dataLayer || [];
 
-  gtag('config', 'G-GKC969S05Z');
+    function gtag() {
+        dataLayer.push(arguments);
+    }
+
+    gtag('js', new Date());
+
+    gtag('config', 'G-GKC969S05Z');
 </script>
 
 <!-- Core theme JS-->
