@@ -27,30 +27,31 @@
 
     <script>
     var ENDPOINT_URL = 'https://usb3d4wvp3.execute-api.us-west-2.amazonaws.com/dev/leaderboard_v2';
-    var TABLE_INFO = [{
-        'task': 'evalRS',
-        'tableBodyId': 'evalRSTableBody',
-        'tId': 'phase1Table',
-        'tableId': 'evalRSTable',
-        'start_date': '2022-01-01',
-        'end_date': '2022-09-05',
-        'metrics': [
-            "score", "hit_rate", "mrr", "mred_country", "mred_user_activity", "mred_track_popularity",
-            "mred_artist_popularity", "mred_gender", "being_less_wrong", "latent_diversity"
-        ],
-        'metric_to_title_mapping': {
-            "score": "Score",
-            "hit_rate": "Hit Rate",
-            "mrr": "MRR",
-            "mred_country": "Country (MRED)",
-            "mred_track_popularity": "Track Pop. (MRED)",
-            "mred_artist_popularity": "Artist Pop. (MRED)",
-            "mred_user_activity": "User Act. (MRED)",
-            "mred_gender": "Gender (MRED)",
-            "being_less_wrong": "Being Less Wrong",
-            "latent_diversity": "Latent Diversity"
-        }
-    },
+    var TABLE_INFO = [
+        // {
+        //     'task': 'evalRS',
+        //     'tableBodyId': 'evalRSTableBody',
+        //     'tId': 'phase1Table',
+        //     'tableId': 'evalRSTable',
+        //     'start_date': '2022-01-01',
+        //     'end_date': '2022-09-05',
+        //     'metrics': [
+        //         "score", "hit_rate", "mrr", "mred_country", "mred_user_activity", "mred_track_popularity",
+        //         "mred_artist_popularity", "mred_gender", "being_less_wrong", "latent_diversity"
+        //     ],
+        //     'metric_to_title_mapping': {
+        //         "score": "Score",
+        //         "hit_rate": "Hit Rate",
+        //         "mrr": "MRR",
+        //         "mred_country": "Country (MRED)",
+        //         "mred_track_popularity": "Track Pop. (MRED)",
+        //         "mred_artist_popularity": "Artist Pop. (MRED)",
+        //         "mred_user_activity": "User Act. (MRED)",
+        //         "mred_gender": "Gender (MRED)",
+        //         "being_less_wrong": "Being Less Wrong",
+        //         "latent_diversity": "Latent Diversity"
+        //     }
+        // },
     {
     'task': 'evalRS',
     'tableBodyId': 'evalRSTableBody2',
@@ -105,14 +106,15 @@
 
     // function to build rows for the submissions in a given table body
     function buildLeaderboardTable(data, targetTable, metrics, t) {
+        console.log(data)
         var htmlBody = '';
-        var rows = data.data;
+        var rows = data;
         for (var i = 0; i < rows.length; i++) {
             metric_vals = []
             for (var j = 0; j < metrics.length; j++) {
-                metric_vals.push(rows[i]['metrics'][metrics[j]])
+                metric_vals.push(rows[i][metrics[j]])
             }
-            let row_data = [rows[i]['#'], rows[i]['info']['nickname'], ...metric_vals, rows[i]['info']['submission_time']]
+            let row_data = [rows[i]['#'], rows[i]['nickname'], ...metric_vals, rows[i]['submitted_at']]
             // console.log(row_data)
             t.row.add(row_data).draw()
 
@@ -151,16 +153,8 @@
             datum['dataTable'] = (tables[i]);
         }
 
-
-        // let TABLE =
-        // put info into tables
-
         TABLE_INFO.forEach(tableInfo =>
-            $.get(ENDPOINT_URL, {limit: 10,
-                                 task: tableInfo['task'],
-                                 start_date: tableInfo['start_date'],
-                                 end_date: tableInfo['end_date']
-            })
+            $.getJSON("assets/evalrs_lb_static.json")
                 // when done
                 .done(function (data) {
                     console.log("Data Loaded: " + JSON.stringify(data));
@@ -217,7 +211,7 @@
 
                 }) // when something happens
                 .fail(function (data) {
-                    alert("ERROR WHEN CALLING THE LEADERBOARD ENDPOINT");
+                    alert("Unable to load json");
                 })
         );
 
@@ -338,10 +332,7 @@
                     <em>Score</em> reflects the aggregated score inclusive of <em>normalization</em>. </p>
 
                     <div class="boardContainer" id="evalRSTable2"></div>
-                    <!--                <h2>Subsequent Items Prediction Leaderboard</h2>-->
-                    <!--                <div class="boardContainer" id="recAllTable"></div>-->
-                    <!--                <h2>Purchase Intent Prediction Leaderboard</h2>-->
-                    <!--                <div class="boardContainer" id="cartTable"></div>-->
+
                 </div> <!-- end of container with NEP task -->
             </div> <!-- end of leaderboards -->
         </div> <!-- end of all page container -->
